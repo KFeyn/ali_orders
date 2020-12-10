@@ -1,6 +1,11 @@
 import plotly.graph_objects as go
 
 
+def color(colorr, text):
+    s = "<span style='color:" + colorr + "';>" + text + ' </span>'
+    return s
+
+
 def drawing(alpha, checklist, range_sl):
 
     if type(checklist) == str:
@@ -10,7 +15,11 @@ def drawing(alpha, checklist, range_sl):
 
     alpha = alpha[(alpha['China'] + alpha['Russia'] >= range_sl[0]) & (alpha['China'] + alpha['Russia'] <= range_sl[1])]
 
+    colors = ['crimson' if i == 'Прибыло в место вручения' else 'black' for i in alpha['last_status']]
     x = alpha['custom']
+
+    keys = dict(zip(x, colors))
+    ticktext = [color(v, k) for k, v in keys.items()]
 
     plot = go.Figure(data=[go.Bar(
         name='В Китае',
@@ -34,5 +43,5 @@ def drawing(alpha, checklist, range_sl):
         title='Дни',
         titlefont_size=16,
         tickfont_size=14,
-    ))
+    ), yaxis=dict(tickmode='array', ticktext=ticktext, tickvals=x))
     return plot

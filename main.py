@@ -11,6 +11,7 @@ my_password = ''
 
 # web.get_orders_names(my_login, my_password)
 
+
 df = web.get_orders_days()
 max_days = (df['China'] + df['Russia']).max()
 
@@ -21,7 +22,7 @@ app.layout = html.Div([dcc.Interval(id='graph-update', interval=3600000, n_inter
                                        min=0,
                                        max=max_days,
                                        step=None,
-                                       marks={0: '0 дней', 7: 'неделя', 14: '2 недели', 30: 'месяц', 60: '2 месяца', max_days: 'максимум'},
+                                       marks={0: '0 дней', 7: 'неделя', 14: '2 недели', 21: '3 недели', 30: 'месяц', 60: '2 месяца', max_days: 'максимум'},
                                        value=[0, max_days]),
 
                        dcc.Checklist(id='checklist',
@@ -43,4 +44,4 @@ def update_graph(checklist, range_l, n):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=False, host='192.168.1.3')
+    app.run_server(debug=False, host='192.168.1.2')

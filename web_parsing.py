@@ -8,13 +8,13 @@ import fake_useragent
 import datetime
 import locale
 import pandas as pd
+from collections import defaultdict
 
 locale.setlocale(locale.LC_TIME, "ru_RU")
 
 
 # Функция получения списка заказов
 def get_orders_names(login, password):
-
     # Логинимся в алике через селениум
     browser = webdriver.Chrome('/Users/feyn/Documents/Мои дурацкие творения/ali_orders/chromedriver')
 
@@ -47,6 +47,7 @@ def get_orders_names(login, password):
         time.sleep(2)
 
         browser.find_element_by_id('remiandTips_waitBuyerAcceptGoods').click()
+
     except sel.common.exceptions.NoSuchElementException:
         browser.get('https://trade.aliexpress.ru/orderList.htm')
 
@@ -75,7 +76,10 @@ def get_orders_names(login, password):
         time.sleep(2)
 
         if j != pages_count - 1:
-            browser.find_element_by_xpath("//a[contains(text(), 'Вперёд')]").click()
+            try:
+                browser.find_element_by_xpath("//a[contains(text(), 'Вперёд')]").click()
+            except sel.common.exceptions.NoSuchElementException:
+                browser.find_element_by_xpath("//a[contains(text(), 'Next')]").click()
 
     # Передаем в реквестс параметры браузера после логина
     browser_cookies = browser.get_cookies()
@@ -97,7 +101,17 @@ def get_orders_names(login, password):
             else json_page['tracking'][0]['consoTagSecondMailNo']
         track_numbers.append(track_number)
 
-    customs = dict(zip(track_numbers, names))
+    # На случай, если в один трек попало несколько заказов
+    customs_test = defaultdict(list)
+
+    for k, v in zip(track_numbers, names):
+        customs_test[k].append(v)
+
+    customs = dict()
+
+    for key in dict(customs_test):
+        customs[key] = ' '.join(customs_test[key][0].split()[:4]) if len(customs_test[key]) == 1 \
+            else ' '.join(customs_test[key][0].split()[:4]) + ' + ' + ' '.join(customs_test[key][1].split()[:4])
 
     # Записываем в файл, чтобы каждый раз не искать
     with open('customs.txt', 'w') as cus:
@@ -106,7 +120,6 @@ def get_orders_names(login, password):
 
 # Функция получения статусов заказов
 def get_orders_days():
-
     # Список статусов прибытия
     arr_st = ['Package arrived to destination country', 'Прибыло на территорию России', 'Arrive at destination country',
               'Package arrived to destination airport', 'Arrival at Destination']
@@ -133,8 +146,8 @@ def get_orders_days():
 
         events = ses['JSON']['data']['events']
 
-        length = len(events)-1
-        custom_name = ' '.join(customs[key].split()[0:4])
+        length = len(events) - 1
+        custom_name = customs[key]
 
         try:
 
@@ -150,7 +163,7 @@ def get_orders_days():
                     border_day = datetime.date.today()
 
             customs_df.loc[j] = [custom_name, key, (border_day - start_day).days, (that_day - border_day).days
-                                ,events[0]['attribute']]
+                , events[0]['attribute']]
 
         # На случай, если на сайте ничего нет про заказ
         except IndexError:
@@ -158,8 +171,3 @@ def get_orders_days():
         j += 1
 
     return customs_df
-
-
-
-
-
