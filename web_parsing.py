@@ -1,4 +1,4 @@
-import selenium as sel
+from selenium.common.exceptions import NoSuchElementException
 from selenium import webdriver
 import time
 import requests
@@ -37,7 +37,7 @@ def get_orders_names(login, password):
         browser.find_element_by_xpath("//button[@type='submit']").click()
 
         time.sleep(2)
-    except sel.common.exceptions.NoSuchElementException:
+    except NoSuchElementException:
         pass
 
     # Пока две попытки на загрузку заказов, если будет падать, допишу while
@@ -48,7 +48,7 @@ def get_orders_names(login, password):
 
         browser.find_element_by_id('remiandTips_waitBuyerAcceptGoods').click()
 
-    except sel.common.exceptions.NoSuchElementException:
+    except NoSuchElementException:
         browser.get('https://trade.aliexpress.ru/orderList.htm')
 
         time.sleep(2)
@@ -78,7 +78,7 @@ def get_orders_names(login, password):
         if j != pages_count - 1:
             try:
                 browser.find_element_by_xpath("//a[contains(text(), 'Вперёд')]").click()
-            except sel.common.exceptions.NoSuchElementException:
+            except NoSuchElementException:
                 browser.find_element_by_xpath("//a[contains(text(), 'Next')]").click()
 
     # Передаем в реквестс параметры браузера после логина
@@ -110,8 +110,10 @@ def get_orders_names(login, password):
     customs = dict()
 
     for key in dict(customs_test):
+        others = 'и др.' if len(customs_test[key]) > 2 else ''
         customs[key] = ' '.join(customs_test[key][0].split()[:4]) if len(customs_test[key]) == 1 \
-            else ' '.join(customs_test[key][0].split()[:4]) + ' + ' + ' '.join(customs_test[key][1].split()[:4])
+            else ' '.join(customs_test[key][0].split()[:4]) + ' + <br>' + ' '.join(customs_test[key][1].split()[:4]) \
+                 + others
 
     # Записываем в файл, чтобы каждый раз не искать
     with open('customs.txt', 'w') as cus:
@@ -120,9 +122,11 @@ def get_orders_names(login, password):
 
 # Функция получения статусов заказов
 def get_orders_days():
-    # Список статусов прибытия
+    # Список статусов прибытия и получения
     arr_st = ['Package arrived to destination country', 'Прибыло на территорию России', 'Arrive at destination country',
               'Package arrived to destination airport', 'Arrival at Destination']
+
+    end_st = ['Ожидает адресата в месте вручения', 'Прибыло в место вручения']
 
     # Создаем юзер агента
     user = fake_useragent.UserAgent().random
@@ -135,7 +139,7 @@ def get_orders_days():
     with open('customs.txt', 'r') as cus:
         customs = json.load(cus)
 
-    customs_df = pd.DataFrame(columns=['custom', 'key', 'China', 'Russia', 'last_status'])
+    customs_df = pd.DataFrame(columns=['custom', 'key', 'China', 'Russia', 'last_status', 'delievered'])
     j = 0
     # Для каждого заказа подаем запрос остатусах и достаем последний статус, дни в России и дни в Китае
     for key in customs.keys():
@@ -162,12 +166,20 @@ def get_orders_days():
                 else:
                     border_day = datetime.date.today()
 
-            customs_df.loc[j] = [custom_name, key, (border_day - start_day).days, (that_day - border_day).days
-                , events[0]['attribute']]
+            for i in range(length, -1, -1):
+
+                if events[i]['attribute'] in end_st:
+                    delievered = 1
+                    break
+                else:
+                    delievered = 0
+
+            customs_df.loc[j] = [custom_name, key, (border_day - start_day).days, (that_day - border_day).days,
+                                 events[0]['attribute'], delievered]
 
         # На случай, если на сайте ничего нет про заказ
         except IndexError:
-            customs_df.loc[j] = [custom_name, key, 0, 0, 'Пока нет информации о заказе']
+            customs_df.loc[j] = [custom_name, key, 0, 0, 'Пока нет информации о заказе', 0]
         j += 1
 
     return customs_df

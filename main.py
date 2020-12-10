@@ -42,16 +42,22 @@ app.layout = html.Div([dcc.Interval(id='graph-update', interval=3600000, n_inter
                        dcc.RangeSlider(id='range_l',
                                        min=0,
                                        max=max_days,
-                                       step=None,
-                                       marks={0: '0 дней', 7: 'неделя', 14: '2 недели', 21: '3 недели', 30: 'месяц', 60: '2 месяца', max_days: 'максимум'},
+                                       step=1,
+                                       tooltip={'always_visible': False, 'placement': 'left'},
+                                       marks={0: '0 дней', 7: 'неделя', 14: '2 недели', 21: '3 недели', 30: 'месяц',
+                                              60: '2 месяца'},
                                        value=[0, max_days]),
 
                        dcc.Checklist(id='checklist',
-                                     options=[{'label': i, 'value': i} for i in df['custom']],
+                                     options=[{'label': i.replace('<br>', ''), 'value': i} for i in df['custom']],
                                      value=[i for i in df['custom']],
-                                     labelStyle={'display': 'block'}
+                                     labelStyle={'display': 'inline-block', 'width': '24em'}
                                      ),
-                       dcc.Graph('shot-dist-graph', config={'displayModeBar': False})])
+                       dcc.Graph(id='shot-dist-graph',
+                                 config={'displayModeBar': False},
+                                 figure={"layout": {
+                                     "height": 650}}
+                                 )])
 
 
 @app.callback(
@@ -67,7 +73,6 @@ def update_graph(checklist, range_l, n):
 executor = ThreadPoolExecutor(max_workers=3)
 executor.submit(get_new_order_names_every)
 executor.submit(get_new_orders_days_every)
-
 
 if __name__ == '__main__':
     app.run_server(debug=False, host='192.168.1.2')
