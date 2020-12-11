@@ -25,7 +25,7 @@ def drawing(alpha, checklist, range_sl):
         y=x,
         x=alpha['China'], orientation='h', text=alpha['China'],
         textposition='inside', textangle=0,
-        marker_color='crimson', customdata=alpha['last_status'],
+        marker_color='coral', customdata=alpha['last_status'],
         hovertemplate="Последний статус: %{customdata}"
     ),
         go.Bar(
@@ -33,7 +33,7 @@ def drawing(alpha, checklist, range_sl):
             y=x,
             x=alpha['Russia'], orientation='h', text=alpha['Russia'],
             textposition='inside', textangle=0,
-            marker_color='blue', customdata=alpha['last_status'],
+            marker_color='skyblue', customdata=alpha['last_status'],
             hovertemplate="Последний статус: %{customdata}"
         )
     ])
