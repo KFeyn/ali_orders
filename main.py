@@ -4,6 +4,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import time
 from concurrent.futures import ThreadPoolExecutor
+import datetime
 
 import web_parsing as web
 import drawing as draw
@@ -16,7 +17,7 @@ def get_new_order_names_every(period=43200):
     while True:
         try:
             web.get_orders_names(my_login, my_password)
-            print("Order names information updated")
+            print("Order names information updated at " + datetime.datetime.today().strftime('%d/%b/%Y %H:%M:%S'))
         except:
             pass
             print("Mistake in order names")
@@ -28,7 +29,7 @@ def get_new_orders_days_every(period=1800):
     global df
     while True:
         df = web.get_orders_days()
-        print("Customs information updated")
+        print("Customs information updated at " + datetime.datetime.today().strftime('%d/%b/%Y %H:%M:%S'))
         time.sleep(period)
 
 
@@ -47,16 +48,13 @@ app.layout = html.Div([dcc.Interval(id='graph-update', interval=3600000, n_inter
                                        marks={0: '0 дней', 7: 'неделя', 14: '2 недели', 21: '3 недели', 30: 'месяц',
                                               60: '2 месяца'},
                                        value=[0, max_days]),
-
                        dcc.Checklist(id='checklist',
                                      options=[{'label': i.replace('<br>', ''), 'value': i} for i in df['custom']],
                                      value=[i for i in df['custom']],
                                      labelStyle={'display': 'inline-block', 'width': '24em'}
                                      ),
                        dcc.Graph(id='shot-dist-graph',
-                                 config={'displayModeBar': False},
-                                 figure={"layout": {
-                                     "height": 650}}
+                                 config={'displayModeBar': False}
                                  )])
 
 

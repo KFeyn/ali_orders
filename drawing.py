@@ -47,6 +47,11 @@ def drawing(alpha, checklist, range_sl):
                        yaxis=dict(
                            tickmode='array',
                            ticktext=ticktext,
-                           tickvals=x)
-                       )
+                           tickvals=x),
+                       height=650,
+                       title={
+                           'text': 'Отслеживается ' + str(len(alpha["custom"])) + ' посылок',
+                           'x': 0.5,
+                           'yanchor': 'top',
+                           'font': {'color': 'black'}})
     return plot
